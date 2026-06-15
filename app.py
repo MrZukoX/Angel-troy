@@ -4,25 +4,22 @@ import calendar
 
 app = Flask(__name__)
 
-# Versión con corrección de f-strings
-VERSION = "1.3.1"
+# Versión 1.4.1 - Limpieza de sangrías invisibles y f-strings
+VERSION = "1.4.1"
 
 @app.route("/")
 def inicio():
-    # 1. Obtener la fecha REAL de hoy (servirá para el reloj y para resaltar el día actual)
+    # 1. Obtener la fecha para el calendario
     hoy = datetime.now()
-    hora_texto = hoy.strftime("%H:%M:%S")
-    fecha_hoy_texto = hoy.strftime("%A, %d de %B de %Y")
 
-    # 2. Capturar el año y mes que el usuario quiere ver desde la URL (por defecto, el actual)
+    # 2. Capturar el año y mes que el usuario quiere ver desde la URL
     ano_vista = request.args.get('year', default=hoy.year, type=int)
     mes_vista = request.args.get('month', default=hoy.month, type=int)
 
-    # Validar que el mes esté entre 1 y 12
     if mes_vista < 1 or mes_vista > 12:
         mes_vista = hoy.month
 
-    # 3. Lógica de navegación de meses (controlar saltos de año en Enero y Diciembre)
+    # 3. Lógica de navegación de meses
     if mes_vista == 1:
         prev_mes = 12
         prev_ano = ano_vista - 1
@@ -37,21 +34,20 @@ def inicio():
         next_mes = mes_vista + 1
         next_ano = ano_vista
 
-    # Lógica de navegación de años completos
     prev_ano_solo = ano_vista - 1
     next_ano_solo = ano_vista + 1
 
-    # 4. Generar la tabla HTML del calendario solicitado
+    # 4. Generar la tabla HTML del calendario
     cal = calendar.HTMLCalendar(firstweekday=0)
     calendario_html = cal.formatmonth(ano_vista, mes_vista)
     
-    # Inyectar clases estilizadas de Bootstrap a la tabla
+    # Inyectar clases de Bootstrap a la tabla
     calendario_html = calendario_html.replace(
         'class="month"', 
         'class="table table-borderless text-center m-0 align-middle"'
     )
 
-    # 5. Paleta de colores Premium (Diseño moderno "Cool Tech")
+    # 5. Paleta de colores Premium
     estilos_css = """
     body {
         background-color: #f1f5f9;
@@ -157,20 +153,20 @@ def inicio():
                                 <div class="bg-indigo-subtle text-indigo rounded-3 p-2 me-3" style="background-color: #e0e7ff; color: #4f46e5;">
                                     <i class="bi bi-clock-history fs-3"></i>
                                 </div>
-                                <h5 class="card-title mb-0 fw-bold text-secondary">Tiempo del Servidor</h5>
+                                <h5 class="card-title mb-0 fw-bold text-secondary">Tiempo del Navegador</h5>
                             </div>
                             <hr class="opacity-25">
-                            <p class="text-muted small mb-1 text-uppercase fw-bold">Fecha de Hoy</p>
-                            <h4 class="fw-semibold text-dark mb-4">{fecha_hoy_texto}</h4>
+                            <p class="text-muted small mb-1 text-uppercase fw-bold">Fecha de tu Ordenador</p>
+                            <h4 class="fw-semibold text-dark mb-4" id="fecha-pc">Cargando fecha...</h4>
                         </div>
                         
                         <div class="rounded-3 p-4 text-center my-3" style="background-color: #f8fafc; border: 1px solid #f1f5f9;">
-                            <p class="text-muted small mb-1 text-uppercase fw-bold">Hora Local</p>
-                            <h1 class="display-3 fw-bold mb-0" style="color: #4f46e5; letter-spacing: -2px;">{hora_texto}</h1>
+                            <p class="text-muted small mb-1 text-uppercase fw-bold">Hora en Vivo</p>
+                            <h1 class="display-3 fw-bold mb-0" id="reloj-pc" style="color: #4f46e5; letter-spacing: -2px;">00:00:00</h1>
                         </div>
                         
                         <div class="text-muted small d-flex align-items-center mt-2">
-                            <i class="bi bi-arrow-clockwise me-2 text-primary"></i> Refresca el navegador para actualizar los segundos.
+                            <i class="bi bi-cpu me-2 text-success"></i> Sincronizado dinámicamente con tu sistema operativo.
                         </div>
                     </div>
                 </div>
@@ -213,7 +209,30 @@ def inicio():
             Infraestructura DevOps de Prácticas &bull; Angelo Vera &bull; 2026
         </footer>
 
+        <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
+        
         <script>
+            // 1. FUNCIÓN PARA EL RELOJ Y FECHA EN TIEMPO REAL (DE TU ORDENADOR)
+            function actualizarReloj() {{
+                const ahora = new Date();
+                
+                // Formatear la hora local de la PC (HH:MM:SS)
+                const opcionesHora = {{ hour: '2-digit', minute: '2-digit', second: '2-digit', hour12: false }};
+                document.getElementById('reloj-pc').innerText = ahora.toLocaleTimeString('es-ES', opcionesHora);
+                
+                // Formatear la fecha larga de la PC
+                const opcionesFecha = {{ weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' }};
+                let fechaFormateada = ahora.toLocaleDateString('es-ES', opcionesFecha);
+                // Primera letra en mayúscula
+                fechaFormateada = fechaFormateada.charAt(0).toUpperCase() + fechaFormateada.slice(1);
+                document.getElementById('fecha-pc').innerText = fechaFormateada;
+            }}
+
+            // Ejecutar el reloj inmediatamente y configurarlo para actualizarse cada 1 segundo (1000ms)
+            actualizarReloj();
+            setInterval(actualizarReloj, 1000);
+
+            // 2. LOGICA PARA RESALTAR EL DÍA ACTUAL EN EL CALENDARIO
             document.addEventListener("DOMContentLoaded", function() {{
                 const card = document.getElementById("calendar-card");
                 const tDay = card.getAttribute("data-today-day");
