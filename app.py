@@ -4,8 +4,8 @@ import calendar
 
 app = Flask(__name__)
 
-# Versión 1.4.1 - Limpieza de sangrías invisibles y f-strings
-VERSION = "1.4.1"
+# Versión con Modo Nocturno Integrado
+VERSION = "1.5.0"
 
 @app.route("/")
 def inicio():
@@ -47,25 +47,27 @@ def inicio():
         'class="table table-borderless text-center m-0 align-middle"'
     )
 
-    # 5. Paleta de colores Premium
+    # 5. Paleta de colores nativa con variables CSS de soporte para Modo Oscuro
     estilos_css = """
     body {
-        background-color: #f1f5f9;
+        background-color: var(--bs-body-bg);
         font-family: 'Segoe UI', system-ui, -apple-system, sans-serif;
+        transition: background-color 0.3s, color 0.3s;
     }
     .gradient-header {
-        background: linear-gradient(135deg, #312e81 0%, #1e1b4b 100%);
+        background: linear-gradient(135deg, #1e1b4b 0%, #312e81 100%);
         color: white;
     }
     .card {
         border: none;
         border-radius: 16px;
-        background-color: #ffffff;
+        box-shadow: 0 4px 6px -1px rgba(0,0,0,0.05), 0 2px 4px -1px rgba(0,0,0,0.03);
+        transition: background-color 0.3s;
     }
     .btn-nav {
-        background-color: #f8fafc;
-        border: 1px solid #e2e8f0;
-        color: #475569;
+        background-color: var(--bs-tertiary-bg);
+        border: 1px solid var(--bs-border-color);
+        color: var(--bs-body-color);
         transition: all 0.2s;
     }
     .btn-nav:hover {
@@ -78,6 +80,11 @@ def inicio():
         color: #059669;
         border: 1px solid #a7f3d0;
     }
+    [data-bs-theme="dark"] .btn-hoy {
+        background-color: #064e3b;
+        color: #34d399;
+        border: 1px solid #047857;
+    }
     .btn-hoy:hover {
         background-color: #059669;
         color: white;
@@ -85,9 +92,12 @@ def inicio():
     th.month {
         font-size: 1.4rem;
         font-weight: 700;
-        color: #312e81;
+        color: #4f46e5;
         padding-bottom: 20px;
         text-transform: capitalize;
+    }
+    [data-bs-theme="dark"] th.month {
+        color: #818cf8;
     }
     .table th {
         color: #94a3b8;
@@ -98,24 +108,43 @@ def inicio():
     }
     .table td {
         font-weight: 600;
-        color: #334155;
+        color: var(--bs-body-color);
         width: 45px;
         height: 45px;
     }
     .noday {
         color: #cbd5e1 !important;
     }
+    [data-bs-theme="dark"] .noday {
+        color: #475569 !important;
+    }
     .credito-badge {
-        background: linear-gradient(135deg, #0f172a 0%, #334155 100%);
+        background: linear-gradient(135deg, #0f172a 0%, #1e293b 100%);
         color: #38bdf8;
         font-weight: 600;
         letter-spacing: 0.5px;
+    }
+    .reloj-contenedor {
+        background-color: var(--bs-light-bg-subtle);
+        border: 1px solid var(--bs-border-color-translucent);
+    }
+    .btn-theme-toggle {
+        background: rgba(255, 255, 255, 0.15);
+        border: none;
+        color: white;
+        padding: 8px 12px;
+        border-radius: 50rem;
+        font-weight: 500;
+        transition: all 0.2s;
+    }
+    .btn-theme-toggle:hover {
+        background: rgba(255, 255, 255, 0.3);
     }
     """
 
     return f"""
     <!DOCTYPE html>
-    <html lang="es">
+    <html lang="es" data-bs-theme="light">
     <head>
         <meta charset="UTF-8">
         <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -134,7 +163,12 @@ def inicio():
                     <h1 class="h3 mb-0 fw-bold"><i class="bi bi-terminal-box me-2 text-info"></i>DevOps Dashboard</h1>
                     <small class="opacity-75">Estado de la infraestructura: <span class="badge bg-success">Online</span></small>
                 </div>
-                <div class="d-flex align-items-center gap-2">
+                
+                <div class="d-flex align-items-center flex-wrap justify-content-center gap-3">
+                    <button class="btn-theme-toggle shadow-sm" id="themeToggler" onclick="cambiarModo()">
+                        <i class="bi bi-moon-stars-fill me-2" id="themeIcon"></i><span id="themeText">Modo Oscuro</span>
+                    </button>
+
                     <span class="badge credito-badge px-3 py-2 rounded-pill shadow-sm fs-7 border border-secondary">
                         <i class="bi bi-code-slash me-2 text-info"></i>Desarrollado por Angelo Vera - 5to A
                     </span>
@@ -147,22 +181,22 @@ def inicio():
             <div class="row g-4">
                 
                 <div class="col-12 col-lg-5">
-                    <div class="card shadow-sm h-100 p-4 d-flex flex-column justify-content-between">
+                    <div class="card p-4 d-flex flex-column justify-content-between h-100">
                         <div>
                             <div class="d-flex align-items-center mb-3">
-                                <div class="bg-indigo-subtle text-indigo rounded-3 p-2 me-3" style="background-color: #e0e7ff; color: #4f46e5;">
+                                <div class="rounded-3 p-2 me-3" style="background-color: #e0e7ff; color: #4f46e5;">
                                     <i class="bi bi-clock-history fs-3"></i>
                                 </div>
                                 <h5 class="card-title mb-0 fw-bold text-secondary">Tiempo del Navegador</h5>
                             </div>
                             <hr class="opacity-25">
                             <p class="text-muted small mb-1 text-uppercase fw-bold">Fecha de tu Ordenador</p>
-                            <h4 class="fw-semibold text-dark mb-4" id="fecha-pc">Cargando fecha...</h4>
+                            <h4 class="fw-semibold mb-4" id="fecha-pc">Cargando fecha...</h4>
                         </div>
                         
-                        <div class="rounded-3 p-4 text-center my-3" style="background-color: #f8fafc; border: 1px solid #f1f5f9;">
+                        <div class="rounded-3 p-4 text-center my-3 reloj-contenedor">
                             <p class="text-muted small mb-1 text-uppercase fw-bold">Hora en Vivo</p>
-                            <h1 class="display-3 fw-bold mb-0" id="reloj-pc" style="color: #4f46e5; letter-spacing: -2px;">00:00:00</h1>
+                            <h1 class="display-3 fw-bold mb-0" id="reloj-pc" style="color: #6366f1; letter-spacing: -2px;">00:00:00</h1>
                         </div>
                         
                         <div class="text-muted small d-flex align-items-center mt-2">
@@ -172,7 +206,7 @@ def inicio():
                 </div>
 
                 <div class="col-12 col-lg-7">
-                    <div class="card shadow-sm h-100 p-4" 
+                    <div class="card p-4 h-100" 
                          id="calendar-card"
                          data-today-day="{hoy.day}"
                          data-today-month="{hoy.month}"
@@ -212,27 +246,47 @@ def inicio():
         <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
         
         <script>
-            // 1. FUNCIÓN PARA EL RELOJ Y FECHA EN TIEMPO REAL (DE TU ORDENADOR)
+            // 1. CONTROL DE TEMA (MODO NOCTURNO / CLARO) RESISTENTE A NAVEGACIÓN
+            const htmlElement = document.documentElement;
+            const themeIcon = document.getElementById('themeIcon');
+            const themeText = document.getElementById('themeText');
+
+            // Leer si el usuario ya tenía guardado un modo predeterminado
+            const temaGuardado = localStorage.getItem('theme') || 'light';
+            aplicarTema(temaGuardado);
+
+            function cambiarModo() {{
+                const nuevoTema = htmlElement.getAttribute('data-bs-theme') === 'light' ? 'dark' : 'light';
+                aplicarTema(nuevoTema);
+                localStorage.setItem('theme', nuevoTema); // Guardar preferencia en el navegador
+            }}
+
+            function aplicarTema(tema) {{
+                htmlElement.setAttribute('data-bs-theme', tema);
+                if (tema === 'dark') {{
+                    themeIcon.className = 'bi bi-sun-fill me-2';
+                    themeText.innerText = 'Modo Claro';
+                }} else {{
+                    themeIcon.className = 'bi bi-moon-stars-fill me-2';
+                    themeText.innerText = 'Modo Oscuro';
+                }}
+            }}
+
+            // 2. RELOJ Y FECHA EN TIEMPO REAL
             function actualizarReloj() {{
                 const ahora = new Date();
-                
-                // Formatear la hora local de la PC (HH:MM:SS)
                 const opcionesHora = {{ hour: '2-digit', minute: '2-digit', second: '2-digit', hour12: false }};
                 document.getElementById('reloj-pc').innerText = ahora.toLocaleTimeString('es-ES', opcionesHora);
                 
-                // Formatear la fecha larga de la PC
                 const opcionesFecha = {{ weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' }};
                 let fechaFormateada = ahora.toLocaleDateString('es-ES', opcionesFecha);
-                // Primera letra en mayúscula
                 fechaFormateada = fechaFormateada.charAt(0).toUpperCase() + fechaFormateada.slice(1);
                 document.getElementById('fecha-pc').innerText = fechaFormateada;
             }}
-
-            // Ejecutar el reloj inmediatamente y configurarlo para actualizarse cada 1 segundo (1000ms)
             actualizarReloj();
             setInterval(actualizarReloj, 1000);
 
-            // 2. LOGICA PARA RESALTAR EL DÍA ACTUAL EN EL CALENDARIO
+            // 3. RESALTAR DÍA ACTUAL
             document.addEventListener("DOMContentLoaded", function() {{
                 const card = document.getElementById("calendar-card");
                 const tDay = card.getAttribute("data-today-day");
@@ -245,7 +299,7 @@ def inicio():
                     const celdas = document.querySelectorAll(".table td:not(.noday)");
                     celdas.forEach(celda => {{
                         if (celda.innerText.trim() === tDay) {{
-                            celda.innerHTML = '<span class="text-white d-flex align-items-center justify-content-center mx-auto rounded-circle fw-bold shadow-sm" style="width: 38px; height: 38px; background: linear-gradient(135deg, #4f46e5 0%, #312e81 100%);">' + tDay + '</span>';
+                            celda.innerHTML = '<span class="text-white d-flex align-items-center justify-content-center mx-auto rounded-circle fw-bold shadow-sm" style="width: 38px; height: 38px; background: linear-gradient(135deg, #6366f1 0%, #312e81 100%);">' + tDay + '</span>';
                         }}
                     }});
                 }}
