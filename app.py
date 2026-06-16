@@ -6,7 +6,7 @@ import re
 
 app = Flask(__name__)
 
-VERSION = "1.9.0"
+VERSION = "2.1.0"
 
 MESES_ES = {
     1: "Enero", 2: "Febrero", 3: "Marzo", 4: "Abril",
@@ -58,7 +58,7 @@ body {
 
 .table th { color: #94a3b8; font-size: 0.8rem; font-weight: 700; text-transform: uppercase; }
 .table td { font-weight: 600; color: var(--bs-body-color); width: 45px; height: 50px; cursor: pointer; border-radius: 8px; position: relative; }
-.table td:not(.noday):hover { background-color: var(--bs-secondary-bg-subtle); }
+.table td:not(.nonday):hover { background-color: var(--bs-secondary-bg-subtle); }
 .noday { color: #cbd5e1 !important; cursor: default !important; }
 [data-bs-theme="dark"] .noday { color: #475569 !important; }
 
@@ -75,6 +75,8 @@ body {
 .log-success { color: #34d399; }
 .log-error { color: #f87171; animation: blinker 1.5s linear infinite; }
 .log-alert { color: #fbbf24; font-weight: bold; }
+.log-deploy { color: #a855f7; }
+.log-training { color: #22d3ee; }
 
 @keyframes blinker { 50% { opacity: 0.5; } }
 
@@ -86,13 +88,28 @@ body {
 
 .reloj-contenedor { background-color: var(--bs-light-bg-subtle); border: 1px solid var(--bs-border-color-translucent); }
 
-/* Animación de pulso para la alarma activa */
 .pulse-danger {
     animation: pulse-bg 1s infinite alternate;
 }
 @keyframes pulse-bg {
     0% { background-color: rgba(239, 68, 68, 0.1); box-shadow: 0 0 0 0 rgba(239, 68, 68, 0.4); }
     100% { background-color: rgba(239, 68, 68, 0.25); box-shadow: 0 0 10px 4px rgba(239, 68, 68, 0.2); }
+}
+
+.video-responsive {
+    position: relative;
+    padding-bottom: 56.25%;
+    height: 0;
+    overflow: hidden;
+    border-radius: 12px;
+}
+.video-responsive iframe {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    border: none;
 }
 """
 
@@ -109,7 +126,6 @@ PLANTILLA_HTML = """
 </head>
 <body>
 
-    <!-- Encabezado -->
     <div class="gradient-header py-4 mb-4 shadow-sm">
         <div class="container d-flex flex-column flex-sm-row justify-content-between align-items-center gap-3">
             <div>
@@ -131,10 +147,8 @@ PLANTILLA_HTML = """
     <div class="container">
         <div class="row g-4">
             
-            <!-- COLUMNA IZQUIERDA: Estado e Infraestructura -->
             <div class="col-12 col-lg-4 d-flex flex-column gap-4">
                 
-                <!-- Tarjeta de Tiempo -->
                 <div class="card p-4 shadow-sm">
                     <div class="d-flex align-items-center mb-3">
                         <div class="rounded-3 p-2 me-3" style="background-color: #e0e7ff; color: #4f46e5;"><i class="bi bi-clock-history fs-4"></i></div>
@@ -146,7 +160,6 @@ PLANTILLA_HTML = """
                     </div>
                 </div>
 
-                <!-- Tarjeta de Recursos + Switch de Pánico -->
                 <div class="card p-4 shadow-sm" id="recursos-card">
                     <div class="d-flex align-items-center justify-content-between mb-3">
                         <div class="d-flex align-items-center">
@@ -173,7 +186,6 @@ PLANTILLA_HTML = """
                     </div>
                 </div>
 
-                <!-- NUEVA TARJETA: Sistema de Alarma Inteligente -->
                 <div class="card p-4 shadow-sm" id="alarm-card">
                     <div class="d-flex align-items-center justify-content-between mb-3">
                         <div class="d-flex align-items-center">
@@ -195,28 +207,11 @@ PLANTILLA_HTML = """
                     </div>
                 </div>
 
-                <!-- Herramienta de Diagnóstico de Red (Ping) -->
-                <div class="card p-4 shadow-sm">
-                    <div class="d-flex align-items-center mb-3">
-                        <div class="rounded-3 p-2 me-3" style="background-color: #fef3c7; color: #d97706;"><i class="bi bi-hdd-network fs-4"></i></div>
-                        <h5 class="mb-0 fw-bold text-secondary">Herramientas de Red</h5>
-                    </div>
-                    <p class="text-muted small">Verifica el estado de comunicación con un host de la red local o externa:</p>
-                    <div class="input-group input-group-sm mb-2">
-                        <span class="input-group-text bg-body-tertiary"><i class="bi bi-globe"></i></span>
-                        <input type="text" id="pingHost" class="form-control" value="192.168.1.1" placeholder="Ej: google.com">
-                        <button class="btn btn-primary" type="button" id="btnPing" onclick="ejecutarPing()">Ping</button>
-                    </div>
-                    <div id="pingResult" class="small fw-semibold mt-1 text-muted" style="display: none;">
-                        <i class="bi bi-arrow-return-right me-1"></i> Respuesta: <span id="pingValue" class="text-success">--</span>
-                    </div>
-                </div>
-
             </div>
 
-            <!-- COLUMNA DERECHA: Calendario e Interacciones -->
-            <div class="col-12 col-lg-8">
-                <div class="card p-4 shadow-sm h-100" id="calendar-card"
+            <div class="col-12 col-lg-8 d-flex flex-column gap-4">
+                
+                <div class="card p-4 shadow-sm" id="calendar-card"
                      data-today-day="{{ hoy.day }}" data-today-month="{{ hoy.month }}" data-today-year="{{ hoy.year }}"
                      data-view-month="{{ mes_vista }}" data-view-year="{{ ano_vista }}">
                     
@@ -247,10 +242,91 @@ PLANTILLA_HTML = """
                         </ul>
                     </div>
                 </div>
+
+                <div class="card p-4 shadow-sm">
+                    <div class="d-flex flex-column flex-sm-row justify-content-between align-items-start align-items-sm-center gap-2 mb-3">
+                        <div class="d-flex align-items-center">
+                            <div class="rounded-3 p-2 me-3" style="background-color: #f3e8ff; color: #a855f7;"><i class="bi bi-rocket-takeoff fs-4"></i></div>
+                            <div>
+                                <h5 class="mb-0 fw-bold text-secondary">Pipeline de Integración Continua (CI/CD)</h5>
+                                <small class="text-muted">Rama activa: <code class="text-purple">main</code></small>
+                            </div>
+                        </div>
+                        <button class="btn btn-purple text-white fw-bold px-3 shadow-sm" style="background-color: #a855f7;" id="btnDeploy" onclick="iniciarDespliegue()">
+                            <i class="bi bi-play-fill me-1"></i> Deploy Code
+                        </button>
+                    </div>
+
+                    <div id="deploy-process-box" class="p-3 bg-body-tertiary rounded-3 border" style="display:none;">
+                        <div class="d-flex justify-content-between small fw-bold mb-2">
+                            <span id="deploy-step-text" class="text-purple">Preparando...</span>
+                            <span id="deploy-pct-text">0%</span>
+                        </div>
+                        <div class="progress" style="height: 10px;">
+                            <div id="deploy-progress-bar" class="progress-bar progress-bar-striped progress-bar-animated bg-purple" style="width: 0%; background-color: #a855f7;"></div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="card p-4 shadow-sm">
+                    <div class="d-flex align-items-center mb-3">
+                        <div class="rounded-3 p-2 me-3" style="background-color: #ffe4e6; color: #f43f5e;"><i class="bi bi-youtube fs-4"></i></div>
+                        <div>
+                            <h5 class="mb-0 fw-bold text-secondary">Centro de Capacitación & Cultura</h5>
+                            <small class="text-muted">Recursos multimedia y muestras de producción nacional ecuatoriana</small>
+                        </div>
+                    </div>
+                    
+                    <div class="d-flex flex-wrap gap-2 mb-3">
+                        <button class="btn btn-outline-danger btn-sm active fw-semibold" id="btn-vid1" onclick="cambiarVideo('Aztra - El Mañana', 'Muestra artística del emblemático tema musical \\'El Mañana\\' interpretado por la icónica banda de rock/metal nacional Aztra.', '🎸 Rock/Metal EC', 'https://www.youtube.com/embed/PhkfHrljRiQ', 'btn-vid1')">
+                            <i class="bi bi-music-note-beamed me-1"></i> Aztra - El Mañana
+                        </button>
+                        <button class="btn btn-outline-danger btn-sm fw-semibold" id="btn-vid2" onclick="cambiarVideo('🐳 Tecnologías de Contenedores', '📦 Explicación práctica de Docker y arquitectura aislada.', '🐳 ¿Qué es Docker?', 'https://www.youtube.com/embed/4Dko5W96tRE', 'btn-vid2')">
+                            <i class="bi bi-box-seam me-1"></i> Módulo 2: Docker
+                        </button>
+                        <button class="btn btn-outline-danger btn-sm fw-semibold" id="btn-vid3" onclick="cambiarVideo('♾️ Cultura & Flujo DevOps', '🔄 Comprendiendo la integración continua y despliegue automatizado.', '♾️ Introducción DevOps', 'https://www.youtube.com/embed/V6HwYv736as', 'btn-vid3')">
+                            <i class="bi bi-infinity me-1"></i> Módulo 3: DevOps
+                        </button>
+                    </div>
+
+                    <div class="row g-3">
+                        <div class="col-12 col-md-7">
+                            <div class="video-responsive border shadow-sm">
+                                <iframe id="yt-player" src="https://www.youtube.com/embed/PhkfHrljRiQ" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" allowfullscreen></iframe>
+                            </div>
+                        </div>
+                        <div class="col-12 col-md-5 d-flex flex-column justify-content-center p-3 bg-body-tertiary rounded-3 border">
+                            <span class="badge bg-danger-subtle text-danger align-self-start mb-2" id="vid-tag">🎸 Rock/Metal EC</span>
+                            <h6 class="fw-bold mb-1 text-body" id="vid-title">Aztra - El Mañana</h6>
+                            <p class="text-muted small mb-0" id="vid-desc">Muestra artística del emblemático tema musical 'El Mañana' interpretado por la icónica banda de rock/metal nacional Aztra.</p>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="card p-4 shadow-sm">
+                    <div class="d-flex align-items-center mb-3">
+                        <div class="rounded-3 p-2 me-3" style="background-color: #fef3c7; color: #d97706;"><i class="bi bi-hdd-network fs-4"></i></div>
+                        <h5 class="mb-0 fw-bold text-secondary">Herramientas de Red</h5>
+                    </div>
+                    <div class="row g-2 align-items-center">
+                        <div class="col-12 col-sm-8">
+                            <div class="input-group input-group-sm">
+                                <span class="input-group-text bg-body-tertiary"><i class="bi bi-globe"></i></span>
+                                <input type="text" id="pingHost" class="form-control" value="192.168.1.1">
+                                <button class="btn btn-primary" type="button" id="btnPing" onclick="ejecutarPing()">Ping</button>
+                            </div>
+                        </div>
+                        <div class="col-12 col-sm-4">
+                            <div id="pingResult" class="small fw-semibold text-muted ps-2" style="display: none;">
+                                Rsp: <span id="pingValue" class="text-success">--</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
             </div>
         </div>
 
-        <!-- Consola de Logs Inferior -->
         <div class="row mt-4">
             <div class="col-12">
                 <div class="card p-4 shadow-sm">
@@ -275,9 +351,8 @@ PLANTILLA_HTML = """
     <script>
         let modoPanico = false;
         let alarmThreshold = 80;
-        let audioCtx = null; // Para generar el sonido de la alarma
+        let audioCtx = null;
 
-        // 1. CONTROL DE TEMA
         const htmlElement = document.documentElement;
         const themeIcon = document.getElementById('themeIcon');
         const themeText = document.getElementById('themeText');
@@ -299,16 +374,15 @@ PLANTILLA_HTML = """
             }
         }
 
-        // 2. RELOJ EN VIVO
         function actualizarReloj() {
             const ahora = new Date();
-            document.getElementById('reloj-pc').innerText = ahora.toLocaleTimeString('es-ES', { hour12: false });
+            document.getElementById('reloj-pc').innerText = SecurityEscape(ahora.toLocaleTimeString('es-ES', { hour12: false }));
             let fecha = ahora.toLocaleDateString('es-ES', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' });
             document.getElementById('fecha-pc').innerText = fecha.charAt(0).toUpperCase() + fecha.slice(1);
         }
+        function SecurityEscape(str) { return str.replace(/</g, "&lt;").replace(/>/g, "&gt;"); }
         setInterval(actualizarReloj, 1000); actualizarReloj();
 
-        // 3. AUXILIAR DE AUDIO (PITIDO SINTETIZADO DE ALARMA)
         function playBeep() {
             if (document.getElementById('muteSound').checked) return;
             try {
@@ -316,13 +390,13 @@ PLANTILLA_HTML = """
                 let osc = audioCtx.createOscillator();
                 let gain = audioCtx.createGain();
                 osc.type = 'sine';
-                osc.frequency.setValueAtTime(880, audioCtx.currentTime); // Tono agudo
+                osc.frequency.setValueAtTime(880, audioCtx.currentTime);
                 gain.gain.setValueAtTime(0.1, audioCtx.currentTime);
                 osc.connect(gain);
                 gain.connect(audioCtx.destination);
                 osc.start();
-                osc.stop(audioCtx.currentTime + 0.15); // Duración corta
-            } catch(e) { console.log("Audio no iniciado por políticas del navegador"); }
+                osc.stop(audioCtx.currentTime + 0.15);
+            } catch(e) {}
         }
 
         function actualizarThresholdTexto(valor) {
@@ -330,7 +404,22 @@ PLANTILLA_HTML = """
             document.getElementById('threshold-val').innerText = valor + '%';
         }
 
-        // 4. SIMULACIÓN DE MÉTRICAS & MODO PÁNICO + CONTROL DE ALARMA
+        function cambiarVideo(titulo, descripcion, tag, url, btnId) {
+            document.getElementById('yt-player').src = url;
+            document.getElementById('vid-title').innerText = titulo;
+            document.getElementById('vid-desc').innerText = descripcion;
+            document.getElementById('vid-tag').innerText = tag;
+            
+            document.getElementById('btn-vid1').classList.remove('active');
+            document.getElementById('btn-vid2').classList.remove('active');
+            document.getElementById('btn-vid3').classList.remove('active');
+            document.getElementById(btnId).classList.add('active');
+
+            const term = document.getElementById('terminal');
+            term.innerHTML += `<span class="log-training">[${new Date().toLocaleTimeString()}] [TRAINING] Cargando contenido multimedia: ${SecurityEscape(titulo)}... OK</span><br>`;
+            term.scrollTop = term.scrollHeight;
+        }
+
         setInterval(() => {
             let cpu, ram;
             const term = document.getElementById('terminal');
@@ -338,16 +427,14 @@ PLANTILLA_HTML = """
             if (!modoPanico) {
                 cpu = Math.floor(Math.random() * (45 - 12) + 12);
                 ram = Math.floor(Math.random() * (60 - 35) + 35);
-                
-                if (Math.random() > 0.75) {
-                    const mensajes = ["Sincronización NTP Exitosa", "Estructura de Red saludable", "Conexiones entrantes balanceadas", "Verificación de storage: OK"];
+                if (Math.random() > 0.82) {
+                    const mensajes = ["Sincronización NTP Exitosa", "Estructura de Red saludable", "Conexiones balanceadas"];
                     term.innerHTML += `<span class="log-info">[${new Date().toLocaleTimeString()}] [INFO] ${mensajes[Math.floor(Math.random()*mensajes.length)]}.</span><br>`;
                 }
             } else {
                 cpu = Math.floor(Math.random() * (100 - 94) + 94);
                 ram = Math.floor(Math.random() * (99 - 91) + 91);
-                
-                const errores = ["CRITICAL: DB Connection Timeout!", "WARNING: Memoria swap superando el 90%", "ERROR: Puerto 443 saturado - Posible ataque DDOS", "ALERT: Pérdida de paquetes en la interfaz eth0"];
+                const errores = ["CRITICAL: DB Connection Timeout!", "ERROR: Puerto 443 saturado - DDOS detectado"];
                 term.innerHTML += `<span class="log-error">[${new Date().toLocaleTimeString()}] [CRITICAL] ${errores[Math.floor(Math.random()*errores.length)]}.</span><br>`;
             }
 
@@ -356,32 +443,21 @@ PLANTILLA_HTML = """
             document.getElementById('ram-txt').innerText = ram + '%';
             document.getElementById('ram-bar').style.width = ram + '%';
             
-            // Colores de barras según criticidad
             if(cpu > 85) { document.getElementById('cpu-bar').className = "progress-bar bg-danger"; }
             else { document.getElementById('cpu-bar').className = "progress-bar bg-info"; }
-            
-            if(ram > 85) { document.getElementById('ram-bar').className = "progress-bar bg-danger"; }
-            else { document.getElementById('ram-bar').className = "progress-bar bg-primary"; }
 
-            // LOGICA DE REVISIÓN DE ALARMA (CPU vs Umbral Seleccionado)
             const alarmCard = document.getElementById('alarm-card');
             const alarmBadge = document.getElementById('alarm-status-badge');
-            
             if (cpu >= alarmThreshold) {
                 alarmCard.classList.add('pulse-danger');
                 alarmBadge.className = "badge bg-danger animate-pulse";
                 alarmBadge.innerText = "¡DISPARADA!";
-                playBeep(); // Intenta hacer sonar el pitido
-                
-                if (Math.random() > 0.6) {
-                    term.innerHTML += `<span class="log-alert">[${new Date().toLocaleTimeString()}] [ALERTA] CPU superó el umbral límite configurado (${alarmThreshold}%).</span><br>`;
-                }
+                playBeep();
             } else {
                 alarmCard.classList.remove('pulse-danger');
                 alarmBadge.className = "badge bg-secondary";
                 alarmBadge.innerText = "Inactiva";
             }
-
             term.scrollTop = term.scrollHeight;
         }, 2500);
 
@@ -390,27 +466,74 @@ PLANTILLA_HTML = """
             const badge = document.getElementById('status-global-badge');
             const uptime = document.getElementById('uptime-contador');
             const iconBg = document.getElementById('recursos-icon-bg');
+
+            if (modoPanico) {
+                badge.className = "badge bg-danger animate-pulse"; badge.innerText = "CRITICAL FAILURE";
+                uptime.className = "badge bg-danger-subtle text-danger fw-bold p-2 fs-7"; uptime.innerText = "0 Días (CAÍDO)";
+                iconBg.style.backgroundColor = "#fee2e2"; iconBg.style.color = "#ef4444";
+            } else {
+                badge.className = "badge bg-success"; badge.innerText = "ONLINE";
+                uptime.className = "badge bg-success-subtle text-success fw-bold p-2 fs-7"; uptime.innerText = "142 Días";
+                iconBg.style.backgroundColor = "#e0f2fe"; iconBg.style.color = "#0284c7";
+            }
+        }
+
+        function iniciarDespliegue() {
+            const btn = document.getElementById('btnDeploy');
+            const box = document.getElementById('deploy-process-box');
+            const bar = document.getElementById('deploy-progress-bar');
+            const stepTxt = document.getElementById('deploy-step-text');
+            const pctTxt = document.getElementById('deploy-pct-text');
             const term = document.getElementById('terminal');
 
             if (modoPanico) {
-                badge.className = "badge bg-danger animate-pulse";
-                badge.innerText = "CRITICAL FAILURE";
-                uptime.className = "badge bg-danger-subtle text-danger fw-bold p-2 fs-7";
-                uptime.innerText = "0 Días (SISTEMA CAÍDO)";
-                iconBg.style.backgroundColor = "#fee2e2"; iconBg.style.color = "#ef4444";
-                term.innerHTML += `<span class="log-error">[${new Date().toLocaleTimeString()}] [ALERT] SWITCH DE INCIDENTE MANUAL INICIADO POR EL ADMINISTRADOR.</span><br>`;
-            } else {
-                badge.className = "badge bg-success";
-                badge.innerText = "ONLINE";
-                uptime.className = "badge bg-success-subtle text-success fw-bold p-2 fs-7";
-                uptime.innerText = "142 Días";
-                iconBg.style.backgroundColor = "#e0f2fe"; iconBg.style.color = "#0284c7";
-                term.innerHTML += `<span class="log-success">[${new Date().toLocaleTimeString()}] [SYSTEM] Contingencia resuelta. Estabilizando servicios...</span><br>`;
+                term.innerHTML += `<span class="log-error">[${new Date().toLocaleTimeString()}] [DEPLOY] [ERROR] Despliegue cancelado automáticamente. En el servidor actual se reportan fallas críticas.</span><br>`;
+                term.scrollTop = term.scrollHeight;
+                alert("¡Error en el Pipeline! No se puede actualizar el sistema mientras el servidor esté caído.");
+                return;
             }
-            term.scrollTop = term.scrollHeight;
+
+            btn.disabled = true;
+            box.style.display = "block";
+            let progreso = 0;
+            
+            term.innerHTML += `<span class="log-deploy">[${new Date().toLocaleTimeString()}] [CI/CD] Triggering new production deployment (commit #A7X92)...</span><br>`;
+
+            let intervalo = setInterval(() => {
+                progreso += 5;
+                bar.style.width = progreso + "%";
+                pctTxt.innerText = progreso + "%";
+
+                if (progreso < 35) {
+                    stepTxt.innerText = "🔨 Stage 1: Compilando paquetes de código...";
+                    if(progreso === 5) term.innerHTML += `<span class="log-info">[${new Date().toLocaleTimeString()}] [CI/CD] Building project dependencies via Webpack...</span><br>`;
+                } else if (progreso < 75) {
+                    stepTxt.className = "text-warning";
+                    bar.className = "progress-bar progress-bar-striped progress-bar-animated bg-warning";
+                    stepTxt.innerText = "🧪 Stage 2: Ejecutando pruebas unitarias...";
+                    if(progreso === 35) term.innerHTML += `<span class="log-alert">[${new Date().toLocaleTimeString()}] [CI/CD] Launching core unit tests with Jest...</span><br>`;
+                } else if (progreso < 100) {
+                    stepTxt.className = "text-info";
+                    bar.className = "progress-bar progress-bar-striped progress-bar-animated bg-info";
+                    stepTxt.innerText = "📦 Stage 3: Distribuyendo contenedores Docker...";
+                    if(progreso === 75) term.innerHTML += `<span class="log-info">[${new Date().toLocaleTimeString()}] [CI/CD] Pushing new production images to local registry...</span><br>`;
+                } else {
+                    clearInterval(intervalo);
+                    stepTxt.className = "text-success";
+                    bar.className = "progress-bar bg-success";
+                    stepTxt.innerHTML = "✅ ¡Despliegue Exitoso! Producción v2.1.0 online.";
+                    term.innerHTML += `<span class="log-success">[${new Date().toLocaleTimeString()}] [SUCCESS] Deployment finished successfully! All checks passed.</span><br>`;
+                    
+                    setTimeout(() => {
+                        btn.disabled = false;
+                        box.style.display = "none";
+                        bar.style.width = "0%";
+                    }, 4000);
+                }
+                term.scrollTop = term.scrollHeight;
+            }, 250);
         }
 
-        // 5. SIMULACIÓN DE PING EN RED
         function ejecutarPing() {
             const host = document.getElementById('pingHost').value.trim();
             const btn = document.getElementById('btnPing');
@@ -419,113 +542,140 @@ PLANTILLA_HTML = """
             const term = document.getElementById('terminal');
 
             if(!host) return;
-
             btn.disabled = true;
-            btn.innerHTML = `<span class="spinner-border spinner-border-sm"></span>`;
             resBox.style.display = "block";
-            resVal.className = "text-warning";
-            resVal.innerText = "Haciendo traza...";
+            resVal.className = "text-warning"; resVal.innerText = "Trazando...";
 
             setTimeout(() => {
                 btn.disabled = false;
-                btn.innerText = "Ping";
-                
                 if (modoPanico && Math.random() > 0.3) {
-                    resVal.className = "text-danger";
-                    resVal.innerText = "Tiempo de espera agotado (Request Timeout)";
-                    term.innerHTML += `<span class="log-error">[${new Date().toLocaleTimeString()}] [NET] Ping fallido hacia ${host}.</span><br>`;
+                    resVal.className = "text-danger"; resVal.innerText = "Timeout";
+                    term.innerHTML += `<span class="log-error">[${new Date().toLocaleTimeString()}] [NET] Ping timeout para ${SecurityEscape(host)}.</span><br>`;
                 } else {
-                    const ms = Math.floor(Math.random() * (62 - 8) + 8);
-                    resVal.className = "text-success";
-                    resVal.innerText = `Exitoso en ${ms}ms (TTL=54)`;
-                    term.innerHTML += `<span class="log-success">[${new Date().toLocaleTimeString()}] [NET] Respuesta de ping desde ${host}: bytes=32 tiempo=${ms}ms</span><br>`;
+                    const ms = Math.floor(Math.random() * (45 - 5) + 5);
+                    resVal.className = "text-success"; resVal.innerText = `${ms}ms`;
+                    term.innerHTML += `<span class="log-success">[${new Date().toLocaleTimeString()}] [NET] Respuesta desde ${SecurityEscape(host)}: tiempo=${ms}ms.</span><br>`;
                 }
                 term.scrollTop = term.scrollHeight;
             }, 1200);
         }
-
-        // 6. INTERACCIÓN CALENDARIO
-        document.addEventListener("DOMContentLoaded", function() {
-            const card = document.getElementById("calendar-card");
-            const tDay = card.getAttribute("data-today-day");
-            const tMonth = card.getAttribute("data-today-month");
-            const tYear = card.getAttribute("data-today-year");
-            const vMonth = card.getAttribute("data-view-month");
-            const vYear = card.getAttribute("data-view-year");
-            
-            const celdas = document.querySelectorAll(".table td:not(.noday)");
-            
-            celdas.forEach(celda => {
-                const diaNum = celda.innerText.trim();
-                
-                if (tMonth === vMonth && tYear === vYear && diaNum === tDay) {
-                    celda.innerHTML = `<span class="text-white d-flex align-items-center justify-content-center mx-auto rounded-circle fw-bold shadow-sm" style="width: 36px; height: 36px; background: linear-gradient(135deg, #6366f1 0%, #312e81 100%);">${diaNum}</span>`;
-                }
-
-                celda.addEventListener('click', () => {
-                    fetch(`/api/tareas?day=${diaNum}`)
-                        .then(response => response.json())
-                        .then(data => {
-                            const lista = document.getElementById('lista-tareas');
-                            lista.innerHTML = "";
-                            if (data.tareas.length === 0) {
-                                lista.innerHTML = `<li>No hay eventos registrados para el día ${diaNum}.</li>`;
-                            } else {
-                                data.tareas.forEach(t => {
-                                    lista.innerHTML += `<li><strong class="text-warning">●</strong> ${t}</li>`;
-                                });
-                            }
-                        });
-                });
-            });
-        });
     </script>
 </body>
 </html>
 """
 
-@app.route("/api/tareas")
-def api_tareas():
-    dia = request.args.get('day', type=int)
-    tareas = TAREAS_DEVOPS.get(dia, [])
-    return jsonify({"tareas": tareas})
-
-@app.route("/")
-def inicio():
+@app.route('/')
+def index():
     hoy = datetime.now()
-    ano_vista = request.args.get('year', default=hoy.year, type=int)
-    mes_vista = request.args.get('month', default=hoy.month, type=int)
-
-    if mes_vista < 1 or mes_vista > 12: mes_vista = hoy.month
-    if ano_vista < 1: ano_vista = hoy.year
-
-    prev_mes = 12 if mes_vista == 1 else mes_vista - 1
-    prev_ano = ano_vista - 1 if mes_vista == 1 else ano_vista
-    next_mes = 1 if mes_vista == 12 else mes_vista + 1
-    next_ano = ano_vista + 1 if mes_vista == 12 else ano_vista
-
-    cal = calendar.HTMLCalendar(firstweekday=0)
-    calendario_html = cal.formatmonth(ano_vista, mes_vista)
+    ano_actual = hoy.year
+    mes_actual = hoy.month
     
-    calendario_html = calendario_html.replace(
-        'class="month"', 
-        'class="table table-borderless text-center m-0 align-middle"'
-    )
-    calendario_html = re.sub(r'<tr><th colspan="7".*?</th></tr>', '', calendario_html)
+    ano_vista = request.args.get('year', default=ano_actual, type=int)
+    mes_vista = request.args.get('month', default=mes_actual, type=int)
+    
+    if mes_vista < 1:
+        mes_vista = 12
+        ano_vista -= 1
+    elif mes_vista > 12:
+        mes_vista = 1
+        ano_vista += 1
+        
+    nombre_mes_vista = MESES_ES.get(mes_vista, "Mes")
+    
+    prev_mes = mes_vista - 1
+    prev_ano = ano_vista
+    if prev_mes < 1:
+        prev_mes = 12
+        prev_ano -= 1
+        
+    next_mes = mes_vista + 1
+    next_ano = ano_vista
+    if next_mes > 12:
+        next_mes = 1
+        next_ano += 1
 
-    for dia_con_tarea in TAREAS_DEVOPS.keys():
-        calendario_html = re.sub(
-            f'>({dia_con_tarea})</td>', 
-            f' class="tiene-tarea">{dia_con_tarea}</td>', 
-            calendario_html
-        )
+    prev_ano_solo = ano_vista - 1
+    next_ano_solo = ano_vista + 1
+
+    # Generación estructurada del Calendario HTML nativo compatible con Bootstrap
+    cal = calendar.Calendar(firstweekday=0) # Lunes primer día
+    semanas = cal.monthdayscalendar(ano_vista, mes_vista)
+    
+    tabla_html = '<table class="table table-bordered text-center align-middle mb-0">'
+    tabla_html += '<thead><tr><th>Lun</th><th>Mar</th><th>Mié</th><th>Jue</th><th>Vie</th><th>Sáb</th><th>Dom</th></tr></thead>'
+    tabla_html += '<tbody>'
+    
+    for semana in semanas:
+        tabla_html += '<tr>'
+        for dia in semana:
+            if dia == 0:
+                tabla_html += '<td class="noday text-muted opacity-25">-</td>'
+            else:
+                clases = []
+                # Validar si el día coincide exactamente con "hoy"
+                if dia == hoy.day and mes_vista == hoy.month and ano_vista == hoy.year:
+                    clases.append("bg-info-subtle border border-info border-2 text-info-emphasis rounded-3")
+                
+                # Validar si tiene tareas asignadas
+                if dia in TAREAS_DEVOPS:
+                    clases.append("tiene-tarea fw-bold")
+                
+                clase_str = " ".join(clases) if clases else ""
+                tabla_html += f'<td class="{clase_str}" onclick="verTareas({dia})">{dia}</td>'
+        tabla_html += '</tr>'
+    tabla_html += '</tbody></table>'
+
+    # Se usa el prefijo 'r' para indicarle a Python que es un string crudo (Raw String)
+    # Evitando así el SyntaxWarning causado por '\${dia}' y '\${t}' de JavaScript.
+    script_calendario = r"""
+    <script>
+    const tareasLocales = %s;
+    function verTareas(dia) {
+        const lista = document.getElementById('lista-tareas');
+        lista.innerHTML = "";
+        
+        document.querySelectorAll('.table td.bg-primary-subtle').forEach(el => el.classList.remove('bg-primary-subtle'));
+        
+        const celdas = document.querySelectorAll('.table td');
+        for(let celda of celdas) {
+            if(!celda.classList.contains('noday') && parseInt(celda.innerText) === dia) {
+                celda.classList.add('bg-primary-subtle');
+                break;
+            }
+        }
+        
+        if (tareasLocales[dia]) {
+            let htmlContent = "";
+            tareasLocales[dia].forEach(t => {
+                htmlContent += `<li class="mb-1 text-start fw-semibold text-body"><i class="bi bi-patch-check-fill text-warning me-2"></i>\${t}</li>`;
+            });
+            lista.innerHTML = htmlContent;
+        } else {
+            lista.innerHTML = `<li class="text-muted text-start"><i class="bi bi-calendar-x me-2"></i>No hay tareas críticas programadas para el día \${dia}.</li>`;
+        }
+    }
+    </script>
+    """ % str(TAREAS_DEVOPS)
+
+    plantilla_final = PLANTILLA_HTML.replace("</body>", f"{script_calendario}</body>")
 
     return render_template_string(
-        PLANTILLA_HTML, estilos_css=ESTILOS_CSS, version=VERSION, hoy=hoy,
-        mes_vista=mes_vista, ano_vista=ano_vista, nombre_mes_vista=MESES_ES[mes_vista],
-        prev_mes=prev_mes, prev_ano=prev_ano, next_mes=next_mes, next_ano=next_ano,
-        prev_ano_solo=ano_vista-1, next_ano_solo=ano_vista+1, calendario_html=calendario_html
+        plantilla_final,
+        estilos_css=ESTILOS_CSS,
+        version=VERSION,
+        hoy=hoy,
+        calendario_html=tabla_html,
+        mes_vista=mes_vista,
+        ano_vista=ano_vista,
+        nombre_mes_vista=nombre_mes_vista,
+        prev_mes=prev_mes,
+        prev_ano=prev_ano,
+        next_mes=next_mes,
+        next_ano=next_ano,
+        prev_ano_solo=prev_ano_solo,
+        next_ano_solo=next_ano_solo
     )
 
-if __name__ == "__main__":
-    app.run(host="0.0.0.0", port=5000, debug=True)
+if __name__ == '__main__':
+    # host='0.0.0.0' expone la aplicación hacia la red del contenedor Docker de forma correcta
+    app.run(host='0.0.0.0', port=5000, debug=True)
