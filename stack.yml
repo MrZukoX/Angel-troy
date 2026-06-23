@@ -2,7 +2,7 @@ version: '3.8'
 
 services:
   angelo:
-    image: ghcr.io/Ajvera2000/angelo:1.0.0
+    image: ghcr.io/ajvera2000/angelo:1.0.0
     build:
       context: .
       dockerfile: Dockerfile
