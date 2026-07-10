@@ -34,7 +34,7 @@ jobs:
         id: meta
         uses: docker/metadata-action@v5
         with:
-          images: ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}
+          images: ghcr.io/MrZukoX/Angel-troy
           tags: |
             type=raw,value=1.0.0
             type=raw,value=latest
@@ -52,7 +52,7 @@ jobs:
       - name: probar la ssh en el vps
         uses: appleboy/ssh-action@v1
         with:
-          host: ${{ secrets.VPS_HOST }}
+          host: 144.91.95.161
           username: ${{ secrets.VPS_USER }}
           password: ${{ secrets.VPS_PASSWORD }}
           port: ${{ secrets.VPS_SSH_PORT }}
@@ -65,7 +65,7 @@ jobs:
       - name: pasar archivos desde el git al vps
         uses: appleboy/scp-action@v1
         with:
-          host: ${{ secrets.VPS_HOST }}
+          host: 144.91.95.161
           username: ${{ secrets.VPS_USER }}
           password: ${{ secrets.VPS_PASSWORD }}
           port: ${{ secrets.VPS_SSH_PORT }}
@@ -76,7 +76,7 @@ jobs:
       - name: Despliegue de los servicios
         uses: appleboy/ssh-action@v1
         with:
-          host: ${{ secrets.VPS_HOST }}
+          host: 144.91.95.161
           username: ${{ secrets.VPS_USER }}
           password: ${{ secrets.VPS_PASSWORD }}
           port: ${{ secrets.VPS_SSH_PORT }}
@@ -88,9 +88,9 @@ jobs:
             echo "==> Iniciando sesión en GHCR..."
             printf "%s" "${{ secrets.GHCR_PAT }}" | docker login ghcr.io -u "${{ github.actor }}" --password-stdin
 
-            # Corrección de nombre: Usando el paquete real 'devops_15_05_26' en minúsculas
+            # Despliegue del proyecto Angel & Troy
             echo "==> Descargando la imagen..."
-            docker pull ghcr.io/ajvera2000/devops_15_05_26:latest
+            docker pull ghcr.io/MrZukoX/Angel-troy:latest
 
             # Despliegue final del stack en Swarm
             echo "==> Desplegando stack..."
