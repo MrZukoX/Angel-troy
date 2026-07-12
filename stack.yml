@@ -9,21 +9,20 @@ services:
       - "traefik.enable=true"
       - "traefik.http.middlewares.redirect-to-https.redirectscheme.scheme=https"
       
-      # Configuración para HTTP
-      - "traefik.http.routers.angelo.entrypoints=http"
-      - "traefik.http.routers.angelo.rule=Host(`angelo.byronrm.com`)"
-      - "traefik.http.routers.angelo.middlewares=redirect-to-https"
-      - "traefik.http.routers.angelo.service=angelo-svc"
+      # Configuración HTTP -> HTTPS
+      - "traefik.http.routers.borrar-angelo.entrypoints=http"
+      - "traefik.http.routers.borrar-angelo.rule=Host(`angelo.byronrm.com`)"
+      - "traefik.http.routers.borrar-angelo.middlewares=redirect-to-https"
       
-      # Configuración para HTTPS
-      - "traefik.http.routers.angelo-secure.entrypoints=https"
-      - "traefik.http.routers.angelo-secure.rule=Host(`angelo.byronrm.com`)"
-      - "traefik.http.routers.angelo-secure.tls=true"
-      - "traefik.http.routers.angelo-secure.tls.certresolver=http"
-      - "traefik.http.routers.angelo-secure.service=angelo-svc"
+      # Configuración HTTPS
+      - "traefik.http.routers.borrar-angelo-secure.entrypoints=https"
+      - "traefik.http.routers.borrar-angelo-secure.rule=Host(`angelo.byronrm.com`)"
+      - "traefik.http.routers.borrar-angelo-secure.tls=true"
+      - "traefik.http.routers.borrar-angelo-secure.tls.certresolver=http"
       
-      # Puerto interno de tu Flask
-      - "traefik.http.services.angelo-svc.loadbalancer.server.port=5000"
+      # Forzar a Traefik a comunicarse explícitamente por la red overlay correcta
+      - "traefik.http.routers.borrar-angelo-secure.service=borrar-angelo-svc"
+      - "traefik.http.services.borrar-angelo-svc.loadbalancer.server.port=5000"
       - "traefik.docker.network=traefik-public"
     deploy:
       replicas: 1
