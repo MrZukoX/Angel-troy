@@ -18,7 +18,6 @@ services:
       - "traefik.http.routers.angelo-secure.rule=Host(`angelo.byronrm.com`)"
       - "traefik.http.routers.angelo-secure.tls=true"
       - "traefik.http.routers.angelo-secure.tls.certresolver=http"
-      - "traefik.http.routers.angelo-secure.service=angelo"
       - "traefik.http.routers.pgangeltroy.entrypoints=http"
       - "traefik.http.routers.pgangeltroy.rule=Host(`pgangeltroy.byronrm.com`)"
       - "traefik.http.routers.pgangeltroy.middlewares=redirect-to-https"
@@ -26,7 +25,6 @@ services:
       - "traefik.http.routers.pgangeltroy-secure.rule=Host(`pgangeltroy.byronrm.com`)"
       - "traefik.http.routers.pgangeltroy-secure.tls=true"
       - "traefik.http.routers.pgangeltroy-secure.tls.certresolver=http"
-      - "traefik.http.routers.pgangeltroy-secure.service=angelo"
       - "traefik.http.routers.portainerat.entrypoints=http"
       - "traefik.http.routers.portainerat.rule=Host(`portainerat.byronrm.com`)"
       - "traefik.http.routers.portainerat.middlewares=redirect-to-https"
@@ -34,7 +32,6 @@ services:
       - "traefik.http.routers.portainerat-secure.rule=Host(`portainerat.byronrm.com`)"
       - "traefik.http.routers.portainerat-secure.tls=true"
       - "traefik.http.routers.portainerat-secure.tls.certresolver=http"
-      - "traefik.http.routers.portainerat-secure.service=angelo"
       - "traefik.http.services.angelo.loadbalancer.server.port=5000"
       - "traefik.docker.network=traefik-public"
     deploy:
