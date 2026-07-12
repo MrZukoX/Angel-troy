@@ -1,7 +1,6 @@
 version: '3.8'
 
 services:
-  # 1. Tu aplicación Web principal
   angelo:
     image: ghcr.io/mrzukox/angel-troy:latest
     networks:
@@ -9,40 +8,27 @@ services:
     labels:
       - "traefik.enable=true"
       - "traefik.http.middlewares.redirect-to-https.redirectscheme.scheme=https"
-      # Rutas HTTP -> HTTPS
+      
+      # Configuración para HTTP
       - "traefik.http.routers.angelo.entrypoints=http"
-      - "traefik.http.routers.angelo.rule=Host('angelo.byronrm.com')"
+      - "traefik.http.routers.angelo.rule=Host(\`angelo.byronrm.com\`)"
       - "traefik.http.routers.angelo.middlewares=redirect-to-https"
-      # Rutas HTTPS Seguras
+      - "traefik.http.routers.angelo.service=angelo-svc"
+      
+      # Configuración para HTTPS
       - "traefik.http.routers.angelo-secure.entrypoints=https"
-      - "traefik.http.routers.angelo-secure.rule=Host('angelo.byronrm.com')"
+      - "traefik.http.routers.angelo-secure.rule=Host(\`angelo.byronrm.com\`)"
       - "traefik.http.routers.angelo-secure.tls=true"
       - "traefik.http.routers.angelo-secure.tls.certresolver=http"
       - "traefik.http.routers.angelo-secure.service=angelo-svc"
+      
+      # Puerto interno de tu Flask
       - "traefik.http.services.angelo-svc.loadbalancer.server.port=5000"
       - "traefik.docker.network=traefik-public"
     deploy:
       replicas: 1
-
-  # 2. El administrador de Base de Datos (Si usas pgAdmin para pgangeltroy)
-  pgadmin:
-    image: dpage/pgadmin4
-    environment:
-      PGADMIN_DEFAULT_EMAIL: admin@byronrm.com
-      PGADMIN_DEFAULT_PASSWORD: tu_password_seguro
-    networks:
-      - traefik-public
-    labels:
-      - "traefik.enable=true"
-      - "traefik.http.routers.pgangeltroy-secure.entrypoints=https"
-      - "traefik.http.routers.pgangeltroy-secure.rule=Host('pgangeltroy.byronrm.com')"
-      - "traefik.http.routers.pgangeltroy-secure.tls=true"
-      - "traefik.http.routers.pgangeltroy-secure.tls.certresolver=http"
-      - "traefik.http.routers.pgangeltroy-secure.service=pgadmin-svc"
-      - "traefik.http.services.pgadmin-svc.loadbalancer.server.port=80" # pgAdmin usa el puerto 80 interno
-      - "traefik.docker.network=traefik-public"
-    deploy:
-      replicas: 1
+      restart_policy:
+        condition: on-failure
 
 networks:
   traefik-public:
