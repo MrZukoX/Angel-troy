@@ -11,13 +11,13 @@ services:
       
       # Configuración para HTTP
       - "traefik.http.routers.angelo.entrypoints=http"
-      - "traefik.http.routers.angelo.rule=Host(\`angelo.byronrm.com\`)"
+      - "traefik.http.routers.angelo.rule=Host(`angelo.byronrm.com`)"
       - "traefik.http.routers.angelo.middlewares=redirect-to-https"
       - "traefik.http.routers.angelo.service=angelo-svc"
       
       # Configuración para HTTPS
       - "traefik.http.routers.angelo-secure.entrypoints=https"
-      - "traefik.http.routers.angelo-secure.rule=Host(\`angelo.byronrm.com\`)"
+      - "traefik.http.routers.angelo-secure.rule=Host(`angelo.byronrm.com`)"
       - "traefik.http.routers.angelo-secure.tls=true"
       - "traefik.http.routers.angelo-secure.tls.certresolver=http"
       - "traefik.http.routers.angelo-secure.service=angelo-svc"
