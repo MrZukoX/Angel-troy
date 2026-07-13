@@ -1,6 +1,0 @@
-services:
-  app:
-    build: .
-    container_name: flask_reloj
-    ports:
-      - "5000:5000"
