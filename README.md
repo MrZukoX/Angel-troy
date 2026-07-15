@@ -4,10 +4,6 @@
 Todo se hace por clicks en `http://portainerat.byronrm.com/`, en este orden:
 **Images (construir) → Volumes (persistencia) → Networks (red interna) → Containers (levantar los 3)**
 
-Archivos que vas a necesitar de este paquete:
-- `angeltroy-backend-context.tar`
-- `angeltroy-frontend-context.tar`
-
 ---
 
 ## Paso 1 — Construir la imagen del backend
