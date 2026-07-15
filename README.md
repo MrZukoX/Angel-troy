@@ -28,7 +28,7 @@ Repite lo mismo:
 3. **Build method**: `Upload` → sube `angeltroy-frontend-context.tar`.
 4. **Build the image**.
 
-Al terminar, en **Images** deberías ver `angeltroy-backend:latest` y `angeltroy-frontend:latest` en la lista, junto con `traefik:v3.5` y las demás que ya tenías.
+Al terminar, en **Images** deberías ver `angeltroy-backend:latest` y `angeltroy-frontend:latest` en la lista, junto con `traefik:v2.11` y las demás que ya tenías.
 
 ---
 
@@ -103,7 +103,7 @@ Verifica que arrancó bien: click en `angeltroy_backend` → **Logs**. Deberías
 5. Pestaña **Env** → agrega:
    | name | value |
    |---|---|
-   | `API_URL` | `http://144.91.95.161:4000/api` |
+   | `API_URL` | `http://144.91.95.161:4000` |
 6. Pestaña **Labels** → agrega estas 6 labels (name / value):
    | name | value |
    |---|---|
