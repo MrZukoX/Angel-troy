@@ -149,6 +149,8 @@ Necesitas un registro DNS nuevo (igual que los otros): `apiangeltroy.byronrm.com
 Cuando cambies el código: reconstruye la imagen correspondiente (**Images → + Build a new image**, mismo nombre `angeltroy-backend:latest` o `angeltroy-frontend:latest`, sube el tar actualizado — sobrescribe la anterior), luego en **Containers**, entra al contenedor viejo (`angeltroy_backend` o `angeltroy_frontend`) → **Recreate** (Portainer tiene un botón "Recreate" que lo destruye y crea de nuevo con la imagen más reciente del mismo nombre, sin perder la configuración). La base de datos nunca se toca porque vive en el volumen `angeltroy_db_data`, no en el contenedor.
 
 ## archivo de configuracion yml del portainer y traefik
+
+
 version: "3.8"
 
 services:
@@ -209,4 +211,7 @@ networks:
     external: true
 
 volumes:
+  portainer_data:
+
+
   portainer_data:
