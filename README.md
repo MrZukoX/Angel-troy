@@ -1,4 +1,5 @@
-# angeltroy — despliegue 100% desde Portainer (sin git, sin SSH)
+# angeltroy — despliegue 
+
 
 Todo se hace por clicks en `http://portainerat.byronrm.com/`, en este orden:
 **Images (construir) → Volumes (persistencia) → Networks (red interna) → Containers (levantar los 3)**
