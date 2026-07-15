@@ -150,6 +150,8 @@ Cuando cambies el código: reconstruye la imagen correspondiente (**Images → +
 
 ## archivo de configuracion yml del portainer y traefik
 
+
+
 version: "3.8"
 
 services:
@@ -210,9 +212,4 @@ networks:
     external: true
 
 volumes:
-  portainer_data:
-
-
-
-
   portainer_data:
