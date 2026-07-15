@@ -1,49 +1,34 @@
-Guía y Documentación del Proyecto: Sistema de Registro de Usuarios en Tiempo Real
-Autores: Latorre Ronald, Vera Angelo
+# 🚀 Sistema de Registro de Usuarios en Tiempo Real
 
-Tutor del Proyecto: Byron Moreno
+Este proyecto es una aplicación web moderna basada en microservicios contenerizados. Permite capturar datos de identificación personal, procesarlos a través de una API REST y almacenarlos de forma persistente en una base de datos relacional. 
 
-Fecha: Julio 2026
+Toda la infraestructura está automatizada mediante **Docker**, orquestada con **Docker Compose**, gestionada visualmente con **Portainer** y expuesta de manera segura.
 
-Índice
-Introducción al Proyecto
+---
 
-Arquitectura del Sistema
+## 👥 Datos del Proyecto
 
-Estructura del Repositorio de Archivos
+* **Autores:** * Latorre Ronald 🧑‍💻
+  * Vera Angelo 🧑‍💻
+* **Tutor del Proyecto:** Byron Moreno 👨‍🏫
+* **Entorno:** Servidor VPS con Docker & Portainer
 
-Base de Datos (PostgreSQL)
+---
 
-Servidor Backend (Node.js & Express)
+## 🛠️ Arquitectura del Sistema
 
-Interfaz de Usuario (HTML5, CSS3 & JS)
+El ecosistema se divide en 4 servicios independientes que se comunican de forma segura dentro de una red virtual aislada en Docker:
 
-Orquestación y Docker Compose
+1. **Frontend (`app_frontend`):** Servidor web ligero con Nginx que sirve la interfaz web responsiva (HTML5, CSS3, JS).
+2. **Backend (`app_backend`):** API REST en Node.js y Express que gestiona las peticiones de datos y la conexión a la base de datos.
+3. **Base de Datos (`app_postgres`):** Servidor de PostgreSQL para el almacenamiento persistente y seguro de los datos.
+4. **Administración de Base de Datos (`app_pgadmin`):** Interfaz gráfica web (pgAdmin) para auditar y consultar las tablas de datos de manera visual.
 
-Administración del Sistema con Portainer
+---
 
-Resolución de Problemas Comunes
+## 📂 Estructura del Proyecto
 
-1. Introducción al Proyecto
-Este proyecto consiste en el desarrollo y despliegue de una aplicación web de registro de usuarios en tiempo real utilizando una arquitectura moderna basada en microservicios contenerizados.
-
-El sistema permite capturar datos de identificación (Cédula, Nombres, Apellidos, Teléfono y Dirección), procesarlos a través de una API REST y almacenarlos de forma persistente en una base de datos relacional robusta. Todo el ecosistema está completamente automatizado y orquestado mediante contenedores Docker, gestionado visualmente con Portainer y expuesto de forma segura a través de subdominios SSL con Traefik como proxy inverso.
-
-2. Arquitectura del Sistema
-El ecosistema se divide en 4 servicios independientes que se comunican entre sí a través de una red virtual aislada en Docker:
-
-Frontend (app_frontend): Servidor web ligero (Nginx) que sirve la interfaz gráfica de cara al cliente de forma asíncrona.
-
-Backend (app_backend): API REST construida sobre Node.js y Express encargada de validar los datos y actuar como puente con la base de datos.
-
-Base de Datos (app_postgres): Motor PostgreSQL para el almacenamiento persistente de registros.
-
-Gestor Gráfico de Base de Datos (app_pgadmin): Interfaz web (pgAdmin) para realizar auditorías, consultas directas y mantenimiento de las tablas de datos.
-
-3. Estructura del Repositorio de Archivos
-Para garantizar la portabilidad del proyecto, los archivos se organizan en el servidor VPS de la siguiente manera:
-
-Plaintext
+```text
 /root/mi-proyecto/
 ├── backend/
 │   ├── server.js
@@ -53,55 +38,7 @@ Plaintext
 │   ├── index.html
 │   └── Dockerfile
 └── docker-compose.yml
-4. Base de Datos (PostgreSQL)
-El motor de base de datos utiliza una tabla relacional denominada usuarios.
-
-Estructura de la Tabla usuarios
-El sistema ejecuta automáticamente una migración y validación en su arranque para asegurar que la tabla cuente con los siguientes campos y tipos de datos:
-
-Campo	Tipo de Dato	Restricción	Descripción
-id	SERIAL	PRIMARY KEY	Incremento único para cada registro.
-cedula	VARCHAR(20)	UNIQUE, NOT NULL	Documento único de identificación del usuario.
-telefono	VARCHAR(20)	Opcional	Teléfono celular de contacto.
-primer_nombre	VARCHAR(50)	NOT NULL	Primer nombre obligatorio.
-segundo_nombre	VARCHAR(50)	Opcional	Segundo nombre del usuario.
-primer_apellido	VARCHAR(50)	NOT NULL	Primer apellido obligatorio.
-segundo_apellido	VARCHAR(50)	Opcional	Segundo apellido del usuario.
-direccion	VARCHAR(150)	Opcional	Lugar de residencia / dirección física.
-fecha_registro	TIMESTAMP	DEFAULT NOW()	Fecha y hora de creación automática.
-5. Servidor Backend (Node.js & Express)
-El archivo server.js gestiona la lógica del lado del servidor. Se conecta a la base de datos utilizando el módulo pg (PostgreSQL Client) mediante variables de entorno configurables en Docker.
-
-Endpoints de la API REST
-GET /api/datos
-
-Descripción: Recupera la lista de todos los usuarios registrados en orden descendente según su fecha de registro.
-
-Respuesta Exitosa (200 OK): JSON con un arreglo de objetos de usuarios.
-
-POST /api/datos
-
-Descripción: Recibe el payload del formulario, valida los campos obligatorios, e inserta el nuevo registro en la base de datos.
-
-Respuesta Exitosa (211 Created): Retorna el objeto del usuario recién insertado.
-
-Error de Duplicidad (400 Bad Request): Controla el código de error 23505 de Postgres (violación de restricción única de cédula) para alertar al cliente.
-
-6. Interfaz de Usuario (HTML5, CSS3 & JS)
-La interfaz se ubica en /frontend/index.html y fue desarrollada bajo estándares modernos de diseño web responsivo (Grid Layout de CSS) con un aspecto nocturno (Dark Mode).
-
-Características Principales del Frontend:
-Orden de Llenado Optimizado: Organizado de forma lógica priorizando la identidad (Nombres, Apellidos) seguido de los identificadores (Cédula, Teléfono) y finalmente la ubicación (Dirección).
-
-Consumo de API Asíncrono (AJAX - Fetch API): Los registros nuevos se guardan y se listan inmediatamente en el panel inferior en tiempo real sin necesidad de recargar el navegador.
-
-Pie de Página Académico: Bloque inferior que detalla las firmas de responsabilidad del proyecto académico (Ronald Latorre y Angelo Vera) y la tutoría del docente.
-
-7. Orquestación y Docker Compose
-La declaración de todo nuestro entorno se realiza en el archivo principal docker-compose.yml. Los volúmenes aseguran que el ciclo de vida de los contenedores no destruya los registros físicos del disco.
-
-YAML
-version: '3.8'
+💾 Estructura de la Base de DatosEl sistema crea y valida automáticamente la tabla usuarios en PostgreSQL en cada arranque del backend con la siguiente estructura:CampoTipo de DatoRestriccionesDescripciónidSERIALPRIMARY KEYIncremento único para cada registro.cedulaVARCHAR(20)UNIQUE, NOT NULLDocumento único de identificación.primer_nombreVARCHAR(50)NOT NULLPrimer nombre (Obligatorio).segundo_nombreVARCHAR(50)OpcionalSegundo nombre del usuario.primer_apellidoVARCHAR(50)NOT NULLPrimer apellido (Obligatorio).segundo_apellidoVARCHAR(50)OpcionalSegundo apellido del usuario.telefonoVARCHAR(20)OpcionalTeléfono celular de contacto.direccionVARCHAR(150)OpcionalUbicación o dirección física de domicilio.fecha_registroTIMESTAMPDEFAULT NOW()Fecha y hora de creación automática.🔌 API Endpoints (Backend)GET /api/datosDescripción: Obtiene la lista de todos los usuarios de la base de datos ordenados por fecha de registro (el más reciente primero).Respuesta Exitosa (200 OK): Arreglo en formato JSON.POST /api/datosDescripción: Recibe el formulario del usuario, valida que los campos requeridos no estén vacíos, e inserta el nuevo registro.Respuesta Exitosa (211 Created): Retorna el objeto del usuario creado.Manejo de Errores (400 Bad Request): Captura el código de error 23505 (Cédula duplicada) y devuelve una alerta amigable.🐳 Archivo de Orquestación (docker-compose.yml)El archivo principal para levantar toda la infraestructura de la aplicación con un solo comando es el siguiente:YAMLversion: '3.8'
 
 services:
   postgres-db:
@@ -159,29 +96,12 @@ volumes:
 networks:
   app-network:
     driver: bridge
-8. Administración del Sistema con Portainer
-Para las tareas de monitorización y despliegue continuo (CI/CD) se utiliza Portainer, una consola visual intuitiva accesible de manera remota.
+🎨 Características de la Interfaz Web (Frontend)Formulario Ordenado: Estructura limpia y responsiva organizada por:Nombre y Apellido (Campos prioritarios de identidad).Cédula y Teléfono.Dirección física de vivienda (Campo completo).Consumo de API en Tiempo Real: El listado inferior se actualiza de manera asíncrona (AJAX mediante Fetch API) inmediatamente después de enviar el formulario, sin necesidad de recargar la página.Aspecto Moderno: Estilo visual oscuro (Dark Mode) para mayor comodidad visual del usuario y una mejor experiencia móvil.🔧 Gestión Continua con PortainerPara facilitar la monitorización en caliente:Módulo de Contenedores: Permite realizar un Restart rápido a los contenedores app_backend y app_frontend cuando se realizan cambios directos de código en los archivos del VPS.Control de Logs: Inspección en tiempo real de consultas SQL y peticiones entrantes para auditorías rápidas.
+---
 
-Tareas Operativas Claves en Portainer:
-Reinicio de Servicios (Hot Reload): Desde el módulo Containers, seleccionando app_backend o app_frontend y ejecutando la opción Restart para aplicar modificaciones de código hechas en caliente en los archivos del VPS.
-
-Verificación de Consola: Capacidad de abrir terminales interactivas (/bin/sh) en caliente directamente desde el navegador en cualquier contenedor de la infraestructura.
-
-Auditoría de Logs: Acceso rápido a las salidas estándar de Node.js y PostgreSQL para rastrear consultas de red y posibles fallos.
-
-9. Resolución de Problemas Comunes
-Error Permission Denied al guardar código en SSH:
-
-Causa: El usuario actual carece de privilegios sobre el directorio /root.
-
-Solución: Acceder al servidor directamente bajo la cuenta del superusuario root, o anteponer la utilidad sudo en caso de contar con permisos en la lista de sudoers.
-
-Error Password authentication failed for user "admin" en pgAdmin:
-
-Causa: El volumen físico de la base de datos ya existía con una contraseña previa, ignorando el valor actual declarado en el archivo YAML de Docker Compose.
-
-Solución: Probar contraseñas anteriores configuradas al inicio del entorno, o remover el volumen pg_data mediante Portainer y volver a desplegar si se requiere una base limpia desde cero.
-
-Contenedor no refleja cambios:
-
-Solución: Forzar la reconstrucción de las imágenes con docker compose down y docker compose up --build -d o forzar el reinicio manual del servicio desde el panel web de Portainer.
+### 💡 ¿Cómo subirlo a GitHub rápido?
+1. Entra a tu repositorio en la página web de GitHub.
+2. Haz clic en **Add file** -> **Create new file**.
+3. En el nombre del archivo escribe exactamente: `README.md`.
+4. Pega el código de arriba en la caja de texto.
+5. Ve abajo del todo, haz clic en el botón verde **Commit changes** ¡y listo! Se verá increíblement
