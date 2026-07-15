@@ -1,159 +1,148 @@
-# 🚀 Sistema de Registro de Usuarios en Tiempo Real
+# angeltroy — despliegue 100% desde Portainer (sin git, sin SSH)
 
-Este proyecto es una aplicación web moderna basada en microservicios contenerizados. Permite capturar datos de identificación personal, procesarlos a través de una API REST y almacenarlos de forma persistente en una base de datos relacional. 
+Todo se hace por clicks en `http://portainerat.byronrm.com/`, en este orden:
+**Images (construir) → Volumes (persistencia) → Networks (red interna) → Containers (levantar los 3)**
 
-Toda la infraestructura está automatizada mediante **Docker**, orquestada con **Docker Compose**, gestionada visualmente con **Portainer** y expuesta de manera segura.
-
----
-
-## 👥 Datos del Proyecto
-
-* **Autores:** * Latorre Ronald 🧑‍💻
-  * Vera Angelo 🧑‍💻
-* **Tutor del Proyecto:** Byron Moreno 👨‍🏫
-* **Entorno:** Servidor VPS con Docker & Portainer
+Archivos que vas a necesitar de este paquete:
+- `angeltroy-backend-context.tar`
+- `angeltroy-frontend-context.tar`
 
 ---
 
-## 🛠️ Arquitectura del Sistema
+## Paso 1 — Construir la imagen del backend
 
-El ecosistema se divide en 4 servicios independientes que se comunican de forma segura dentro de una red virtual aislada en Docker:
+1. Portainer → menú lateral → **Images**.
+2. Botón **+ Build a new image** (arriba a la derecha).
+3. **Name**: `angeltroy-backend:latest`
+4. **Build method**: `Upload`
+5. Sube el archivo `angeltroy-backend-context.tar`.
+6. Deja **Dockerfile path** como `Dockerfile` (ya está en la raíz del tar).
+7. Botón **Build the image**. Espera a que termine (verás el log del build en vivo).
 
-1. **Frontend (`app_frontend`):** Servidor web ligero con Nginx que sirve la interfaz web responsiva (HTML5, CSS3, JS).
-2. **Backend (`app_backend`):** API REST en Node.js y Express que gestiona las peticiones de datos y la conexión a la base de datos.
-3. **Base de Datos (`app_postgres`):** Servidor de PostgreSQL para el almacenamiento persistente y seguro de los datos.
-4. **Administración de Base de Datos (`app_pgadmin`):** Interfaz gráfica web (pgAdmin) para auditar y consultar las tablas de datos de manera visual.
+## Paso 2 — Construir la imagen del frontend
 
----
+Repite lo mismo:
+1. **Images → + Build a new image**.
+2. **Name**: `angeltroy-frontend:latest`
+3. **Build method**: `Upload` → sube `angeltroy-frontend-context.tar`.
+4. **Build the image**.
 
-## 📂 Estructura del Proyecto
-
-```text
-/root/mi-proyecto/
-├── backend/
-│   ├── server.js
-│   ├── package.json
-│   └── Dockerfile
-├── frontend/
-│   ├── index.html
-│   └── Dockerfile
-└── docker-compose.yml
-💾 Estructura de la Base de Datos
-El sistema crea y valida automáticamente la tabla usuarios en PostgreSQL en cada arranque del backend con la siguiente estructura:
-
-Campo	Tipo de Dato	Restricciones	Descripción
-id	SERIAL	PRIMARY KEY	Incremento único para cada registro.
-cedula	VARCHAR(20)	UNIQUE, NOT NULL	Documento único de identificación.
-primer_nombre	VARCHAR(50)	NOT NULL	Primer nombre (Obligatorio).
-segundo_nombre	VARCHAR(50)	Opcional	Segundo nombre del usuario.
-primer_apellido	VARCHAR(50)	NOT NULL	Primer apellido (Obligatorio).
-segundo_apellido	VARCHAR(50)	Opcional	Segundo apellido del usuario.
-telefono	VARCHAR(20)	Opcional	Teléfono celular de contacto.
-direccion	VARCHAR(150)	Opcional	Ubicación o dirección física de domicilio.
-fecha_registro	TIMESTAMP	DEFAULT NOW()	Fecha y hora de creación automática.
-🔌 API Endpoints (Backend)
-GET /api/datos
-
-Descripción: Obtiene la lista de todos los usuarios de la base de datos ordenados por fecha de registro (el más reciente primero).
-
-Respuesta Exitosa (200 OK): Arreglo en formato JSON.
-
-POST /api/datos
-
-Descripción: Recibe el formulario del usuario, valida que los campos requeridos no estén vacíos, e inserta el nuevo registro.
-
-Respuesta Exitosa (211 Created): Retorna el objeto del usuario creado.
-
-Manejo de Errores (400 Bad Request): Captura el código de error 23505 (Cédula duplicada) y devuelve una alerta amigable.
-
-🐳 Archivo de Orquestación (docker-compose.yml)
-El archivo principal para levantar toda la infraestructura de la aplicación con un solo comando es el siguiente:
-
-YAML
-version: '3.8'
-
-services:
-  postgres-db:
-    image: postgres:15-alpine
-    container_name: app_postgres
-    restart: always
-    environment:
-      POSTGRES_USER: admin
-      POSTGRES_PASSWORD: password123
-      POSTGRES_DB: app_db
-    volumes:
-      - pg_data:/var/lib/postgresql/data
-    networks:
-      - app-network
-
-  pgadmin:
-    image: dpage/pgadmin4
-    container_name: app_pgadmin
-    restart: always
-    environment:
-      PGADMIN_DEFAULT_EMAIL: admin@byronrm.com
-      PGADMIN_DEFAULT_PASSWORD: password123
-    networks:
-      - app-network
-
-  backend:
-    build: ./backend
-    container_name: app_backend
-    restart: always
-    environment:
-      DB_USER: admin
-      DB_HOST: postgres-db
-      DB_NAME: app_db
-      DB_PASSWORD: password123
-      DB_PORT: 5432
-    depends_on:
-      - postgres-db
-    networks:
-      - app-network
-
-  frontend:
-    build: ./frontend
-    container_name: app_frontend
-    restart: always
-    ports:
-      - "80:80"
-    depends_on:
-      - backend
-    networks:
-      - app-network
-
-volumes:
-  pg_data:
-
-networks:
-  app-network:
-    driver: bridge
-🎨 Características de la Interfaz Web (Frontend)
-Formulario Ordenado: Estructura limpia y responsiva organizada por:
-
-Nombre y Apellido (Campos prioritarios de identidad).
-
-Cédula y Teléfono.
-
-Dirección física de vivienda (Campo completo).
-
-Consumo de API en Tiempo Real: El listado inferior se actualiza de manera asíncrona (AJAX mediante Fetch API) inmediatamente después de enviar el formulario, sin necesidad de recargar la página.
-
-Aspecto Moderno: Estilo visual oscuro (Dark Mode) para mayor comodidad visual del usuario y una mejor experiencia móvil.
-
-🔧 Gestión Continua con Portainer
-Para facilitar la monitorización en caliente:
-
-Módulo de Contenedores: Permite realizar un Restart rápido a los contenedores app_backend y app_frontend cuando se realizan cambios directos de código en los archivos del VPS.
-
-Control de Logs: Inspección en tiempo real de consultas SQL y peticiones entrantes para auditorías rápidas.
-
+Al terminar, en **Images** deberías ver `angeltroy-backend:latest` y `angeltroy-frontend:latest` en la lista, junto con `traefik:v3.5` y las demás que ya tenías.
 
 ---
 
-### 💡 ¿Cómo subirlo a GitHub rápido?
-1. Entra a tu repositorio en la página web de GitHub.
-2. Haz clic en **Add file** -> **Create new file**.
-3. En el nombre del archivo escribe exactamente: `README.md`.
-4. Pega el código de arriba en la caja de texto.
-5. Ve abajo del todo, haz clic en el botón verde **Commit changes** ¡y listo! Se verá increíblemente profesional en la página principal de tu proyecto.
+## Paso 3 — Crear el volumen para la base de datos (persistencia)
+
+1. Portainer → **Volumes → + Add volume**.
+2. **Name**: `angeltroy_db_data`
+3. Driver: `local` (por defecto).
+4. **Create the volume**.
+
+---
+
+## Paso 4 — Crear la red interna (para que backend y db se hablen)
+
+1. Portainer → **Networks → + Add network**.
+2. **Name**: `angeltroy_internal`
+3. Driver: `bridge`.
+4. Deja el resto por defecto → **Create the network**.
+
+---
+
+## Paso 5 — Levantar el contenedor de la base de datos
+
+1. Portainer → **Containers → + Add container**.
+2. **Name**: `angeltroy_db`
+3. **Image**: `postgres:16-alpine`
+4. Baja a **Network** → selecciona `angeltroy_internal` (la que creaste en el paso 4).
+5. Ve a la pestaña **Volumes** (dentro del formulario) → **map additional volume**:
+   - **Container**: `/var/lib/postgresql/data`
+   - **Volume**: selecciona `angeltroy_db_data` (el que creaste en el paso 3)
+6. Ve a la pestaña **Env** → agrega 3 variables:
+   | name | value |
+   |---|---|
+   | `POSTGRES_USER` | `angeltroy` |
+   | `POSTGRES_PASSWORD` | 24810 |
+   | `POSTGRES_DB` | `angeltroy` |
+7. Ve a **Restart policy** → selecciona `Unless stopped`.
+8. Botón **Deploy the container**.
+
+---
+
+## Paso 6 — Levantar el contenedor del backend (API)
+
+1. **Containers → + Add container**.
+2. **Name**: `angeltroy_backend`
+3. **Image**: `angeltroy-backend:latest`
+4. **Network**: `angeltroy_internal` (misma red que la base de datos, para que se vean entre sí por nombre).
+5. Pestaña **Ports**:
+   - **map additional port** → host `4000` → container `4000` → protocolo `TCP`.
+6. Pestaña **Env** → agrega:
+   | name | value |
+   |---|---|
+   | `PGHOST` | `angeltroy_db` |
+   | `PGPORT` | `5432` |
+   | `PGUSER` | `angeltroy` |
+   | `PGPASSWORD` | *(la misma contraseña del paso 5)* |
+   | `PGDATABASE` | `angeltroy` |
+   | `PORT` | `4000` |
+7. **Restart policy**: `Unless stopped`.
+8. **Deploy the container**.
+
+Verifica que arrancó bien: click en `angeltroy_backend` → **Logs**. Deberías ver `Tabla "tasks" verificada/creada correctamente.` y `API escuchando en el puerto 4000`.
+
+---
+
+## Paso 7 — Levantar el contenedor del frontend (con Traefik)
+
+1. **Containers → + Add container**.
+2. **Name**: `angeltroy_frontend`
+3. **Image**: `angeltroy-frontend:latest`
+4. **Network**: `root_default` (la red donde vive tu Traefik — **esta es la clave** para que te dé HTTPS automático).
+5. Pestaña **Env** → agrega:
+   | name | value |
+   |---|---|
+   | `API_URL` | `http://144.91.95.161:4000/api` |
+6. Pestaña **Labels** → agrega estas 6 labels (name / value):
+   | name | value |
+   |---|---|
+   | `traefik.enable` | `true` |
+   | `traefik.docker.network` | `root_default` |
+   | `traefik.http.routers.angeltroy-front.rule` | `` Host(`angeltroy.byronrm.com`) `` |
+   | `traefik.http.routers.angeltroy-front.entrypoints` | `websecure` |
+   | `traefik.http.routers.angeltroy-front.tls.certresolver` | `letsencrypt` |
+   | `traefik.http.services.angeltroy-front.loadbalancer.server.port` | `80` |
+7. **Restart policy**: `Unless stopped`.
+8. **Deploy the container**.
+
+---
+
+## Paso 8 — Abrir el puerto del backend
+
+Esto sí requiere una consola, pero **puedes usar la consola web de Portainer**, sin SSH externo:
+1. Portainer → **Containers** → busca cualquier contenedor con acceso a shell (o usa **Host → Console** si tu versión de Portainer lo expone), o pide a quien administra el proveedor del VPS que abra el puerto `4000/tcp` en el firewall/panel de control (muchos proveedores como Hetzner, Contabo, etc. tienen esto en su panel web, sin necesidad de SSH).
+2. Si tu Portainer tiene acceso al **Host** (menú lateral → *Host* en algunas versiones), ahí a veces hay una opción de consola del propio servidor.
+
+Si de plano no tienes forma de abrir el puerto sin SSH, dime y ajustamos el backend para que use el mismo Traefik (HTTPS, sin necesitar abrir puertos nuevos) — ver la sección "Alternativa" más abajo.
+
+---
+
+## Paso 9 — Verificar
+
+- `http://144.91.95.161:4000/api/health` → `{"status":"ok","db":"conectada"}`
+- `https://angeltroy.byronrm.com` → el gestor de tareas, con el punto de estado en verde arriba a la derecha.
+- Crea, marca como hecha y borra una tarea. Recarga la página — deben seguir ahí.
+
+---
+
+## Alternativa recomendada: backend también por Traefik (evita abrir puertos y el aviso de "contenido mixto")
+
+Si en el paso 8 no puedes abrir el firewall, esta opción es mejor de todos modos: el backend también pasa por Traefik, con HTTPS, sin publicar ningún puerto nuevo.
+
+Necesitas un registro DNS nuevo (igual que los otros): `apiangeltroy.byronrm.com → 144.91.95.161`. Si puedes crear ese registro, dime y te reescribo el Paso 6 y el Paso 7 para que el backend también viva en la red `root_default` con sus propias labels de Traefik, en vez de publicar el puerto 4000.
+
+---
+
+## Actualizar la app más adelante
+
+Cuando cambies el código: reconstruye la imagen correspondiente (**Images → + Build a new image**, mismo nombre `angeltroy-backend:latest` o `angeltroy-frontend:latest`, sube el tar actualizado — sobrescribe la anterior), luego en **Containers**, entra al contenedor viejo (`angeltroy_backend` o `angeltroy_frontend`) → **Recreate** (Portainer tiene un botón "Recreate" que lo destruye y crea de nuevo con la imagen más reciente del mismo nombre, sin perder la configuración). La base de datos nunca se toca porque vive en el volumen `angeltroy_db_data`, no en el contenedor.
