@@ -147,3 +147,66 @@ Necesitas un registro DNS nuevo (igual que los otros): `apiangeltroy.byronrm.com
 ## Actualizar la app más adelante
 
 Cuando cambies el código: reconstruye la imagen correspondiente (**Images → + Build a new image**, mismo nombre `angeltroy-backend:latest` o `angeltroy-frontend:latest`, sube el tar actualizado — sobrescribe la anterior), luego en **Containers**, entra al contenedor viejo (`angeltroy_backend` o `angeltroy_frontend`) → **Recreate** (Portainer tiene un botón "Recreate" que lo destruye y crea de nuevo con la imagen más reciente del mismo nombre, sin perder la configuración). La base de datos nunca se toca porque vive en el volumen `angeltroy_db_data`, no en el contenedor.
+
+## archivo de configuracion yml del portainer y traefik
+version: "3.8"
+
+services:
+  traefik:
+    image: traefik:v2.11
+    container_name: traefik
+    restart: always
+    security_opt:
+      - no-new-privileges:true
+    ports:
+      - "80:80"
+      - "443:443"
+    volumes:
+      - /var/run/docker.sock:/var/run/docker.sock:ro
+      - ./acme.json:/acme.json
+    command:
+      - "--api.dashboard=true"
+      - "--providers.docker=true"
+      - "--providers.docker.exposedbydefault=false"
+      - "--providers.docker.network=traefik-public"
+      - "--entrypoints.web.address=:80"
+      - "--entrypoints.websecure.address=:443"
+      # Redirección automática global de HTTP a HTTPS
+      - "--entrypoints.web.http.redirections.entryPoint.to=websecure"
+      - "--entrypoints.web.http.redirections.entryPoint.scheme=https"
+      - "--certificatesresolvers.myresolver.acme.tlschallenge=true"
+      - "--certificatesresolvers.myresolver.acme.email=tu-correo@byronrm.com" # Tu correo real aquí
+      - "--certificatesresolvers.myresolver.acme.storage=/acme.json"
+    networks:
+      - traefik-public
+    labels:
+      - "traefik.enable=true"
+      - "traefik.http.routers.traefik-dashboard.rule=Host(`traefikat.byronrm.com`)"
+      - "traefik.http.routers.traefik-dashboard.entrypoints=websecure"
+      - "traefik.http.routers.traefik-dashboard.service=api@internal"
+      - "traefik.http.routers.traefik-dashboard.tls.certresolver=myresolver"
+
+  portainer:
+    image: portainer/portainer-ce:latest
+    container_name: portainer
+    restart: always
+    security_opt:
+      - no-new-privileges:true
+    volumes:
+      - /var/run/docker.sock:/var/run/docker.sock
+      - portainer_data:/data
+    networks:
+      - traefik-public
+    labels:
+      - "traefik.enable=true"
+      - "traefik.http.routers.portainer.rule=Host(`portainerat.byronrm.com`)"
+      - "traefik.http.routers.portainer.entrypoints=websecure"
+      - "traefik.http.routers.portainer.tls.certresolver=myresolver"
+      - "traefik.http.services.portainer.loadbalancer.server.port=9000"
+
+networks:
+  traefik-public:
+    external: true
+
+volumes:
+  portainer_data:
