@@ -8,8 +8,7 @@ Toda la infraestructura está automatizada mediante **Docker**, orquestada con *
 
 ## 👥 Datos del Proyecto
 
-* **Autores:** * Latorre Ronald 🧑‍💻
-  * Vera Angelo 🧑‍💻
+* **Autores:** * Latorre Ronald 🧑‍💻 Vera Angelo 🧑‍💻
 * **Tutor del Proyecto:** Byron Moreno 👨‍🏫
 * **Entorno:** Servidor VPS con Docker & Portainer
 
@@ -38,7 +37,9 @@ El ecosistema se divide en 4 servicios independientes que se comunican de forma 
 │   ├── index.html
 │   └── Dockerfile
 └── docker-compose.yml
-💾 Estructura de la Base de DatosEl sistema crea y valida automáticamente la tabla usuarios en PostgreSQL en cada arranque del backend con la siguiente estructura:CampoTipo de DatoRestriccionesDescripciónidSERIALPRIMARY KEYIncremento único para cada registro.cedulaVARCHAR(20)UNIQUE, NOT NULLDocumento único de identificación.primer_nombreVARCHAR(50)NOT NULLPrimer nombre (Obligatorio).segundo_nombreVARCHAR(50)OpcionalSegundo nombre del usuario.primer_apellidoVARCHAR(50)NOT NULLPrimer apellido (Obligatorio).segundo_apellidoVARCHAR(50)OpcionalSegundo apellido del usuario.telefonoVARCHAR(20)OpcionalTeléfono celular de contacto.direccionVARCHAR(150)OpcionalUbicación o dirección física de domicilio.fecha_registroTIMESTAMPDEFAULT NOW()Fecha y hora de creación automática.🔌 API Endpoints (Backend)GET /api/datosDescripción: Obtiene la lista de todos los usuarios de la base de datos ordenados por fecha de registro (el más reciente primero).Respuesta Exitosa (200 OK): Arreglo en formato JSON.POST /api/datosDescripción: Recibe el formulario del usuario, valida que los campos requeridos no estén vacíos, e inserta el nuevo registro.Respuesta Exitosa (211 Created): Retorna el objeto del usuario creado.Manejo de Errores (400 Bad Request): Captura el código de error 23505 (Cédula duplicada) y devuelve una alerta amigable.🐳 Archivo de Orquestación (docker-compose.yml)El archivo principal para levantar toda la infraestructura de la aplicación con un solo comando es el siguiente:YAMLversion: '3.8'
+💾 Estructura de la Base de Datos
+
+El sistema crea y valida automáticamente la tabla usuarios en PostgreSQL en cada arranque del backend con la siguiente estructura:CampoTipo de DatoRestriccionesDescripciónidSERIALPRIMARY KEYIncremento único para cada registro.cedulaVARCHAR(20)UNIQUE, NOT NULLDocumento único de identificación.primer_nombreVARCHAR(50)NOT NULLPrimer nombre (Obligatorio).segundo_nombreVARCHAR(50)OpcionalSegundo nombre del usuario.primer_apellidoVARCHAR(50)NOT NULLPrimer apellido (Obligatorio).segundo_apellidoVARCHAR(50)OpcionalSegundo apellido del usuario.telefonoVARCHAR(20)OpcionalTeléfono celular de contacto.direccionVARCHAR(150)OpcionalUbicación o dirección física de domicilio.fecha_registroTIMESTAMPDEFAULT NOW()Fecha y hora de creación automática.🔌 API Endpoints (Backend)GET /api/datosDescripción: Obtiene la lista de todos los usuarios de la base de datos ordenados por fecha de registro (el más reciente primero).Respuesta Exitosa (200 OK): Arreglo en formato JSON.POST /api/datosDescripción: Recibe el formulario del usuario, valida que los campos requeridos no estén vacíos, e inserta el nuevo registro.Respuesta Exitosa (211 Created): Retorna el objeto del usuario creado.Manejo de Errores (400 Bad Request): Captura el código de error 23505 (Cédula duplicada) y devuelve una alerta amigable.🐳 Archivo de Orquestación (docker-compose.yml)El archivo principal para levantar toda la infraestructura de la aplicación con un solo comando es el siguiente:YAMLversion: '3.8'
 
 services:
   postgres-db:
